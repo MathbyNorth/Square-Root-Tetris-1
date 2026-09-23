@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Square Root Tetris</title>
+
+<style>
+
+body{
+    background:black;
+    color:white;
+    font-family:Arial, sans-serif;
+    text-align:center;
+    overflow:hidden;
+}
+
+h1{
+    color:gold;
+    text-shadow:3px 3px red;
+}
+
+#startScreen{
+    margin-top:100px;
+}
+
+.flash{
+    animation:flash 1s infinite;
+}
+
+@keyframes flash{
+    50%{opacity:0;}
+}
+
+canvas{
+    background:#111;
+    border:5px solid cyan;
+    margin-top:10px;
+}
+
+#gameArea{
+    display:none;
+}
+
+#question{
+    font-size:28px;
+    color:yellow;
+    margin:10px;
+}
+
+input{
+    font-size:24px;
+    width:150px;
+    text-align:center;
+}
+
+button{
+    font-size:22px;
+    padding:8px 20px;
+}
+
+#feedback{
+    font-size:40px;
+    font-weight:bold;
+    height:50px;
+}
+
+.correct{
+    color:lime;
+}
+
+.wrong{
+    color:red;
+}
+
+#info{
+    font-size:22px;
+    margin-top:10px;
+}
+
+</style>
+</head>
+<body>
+
+<div id="startScreen">
+
+<h1>SQUARE ROOT TETRIS</h1>
+
+<h2 class="flash">INSERT COIN</h2>
+
+<p>Press SPACE to Start</p>
+
+</div>
+
+<div id="gameArea">
+
+<div id="question">
+What is the approximate square root of:
+</div>
+
+<canvas id="game" width="400" height="600"></canvas>
+
+<div style="margin-top:10px">
+
+Answer:
+<input id="answer">
+
+<button onclick="checkAnswer()">
+ENTER
+</button>
+
+</div>
+
+<div id="feedback"></div>
+
+<div id="info">
+Level:
+<span id="level">1</span>
+
+|
+Score:
+<span id="score">0</span>
+</div>
+
+</div>
+
+<script>
+
+document.addEventListener("keydown",function(e){
+
+if(e.code==="Space"){
+startGame();
+}
+
+});
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let score=0;
+let level=1;
+
+let speed=3;
+
+const colors=[
+"#00FFFF",
+"#FF6699",
+"#FFFF00",
+"#00FF00",
+"#FF6600",
+"#9933FF",
+"#3399FF"
+];
+
+const questions=[
+
+{q:"√0.15",a:0.39},
+{q:"√0.22",a:0.47},
+{q:"√0.45",a:0.67},
+{q:"√0.7",a:0.84},
+{q:"√4.5",a:2.1},
+{q:"√14.5",a:3.8},
+{q:"√84.5",a:9.2},
+{q:"√145.5",a:12.1},
+{q:"√(8/10)",a:0.9},
+{q:"√(17/5)",a:1.8},
+{q:"√(29/6)",a:2.2}
+
+];
+
+let currentQuestion;
+
+let block={
+x:150,
+y:0,
+size:100,
+color:"cyan"
+};
+
+function startGame(){
+
+document.getElementById("startScreen").style.display="none";
+
+document.getElementById("gameArea").style.display="block";
+
+newQuestion();
+
+setInterval(gameLoop,30);
+
+}
+
+function newQuestion(){
+
+currentQuestion=
+questions[Math.floor(Math.random()*questions.length)];
+
+block.x=150;
+block.y=0;
+
+block.color=
+colors[Math.floor(Math.random()*colors.length)];
+
+}
+
+function gameLoop(){
+
+ctx.clearRect(0,0,400,600);
+
+block.y+=speed;
+
+drawBlock();
+
+if(block.y>520){
+
+block.y=0;
+
+score=Math.max(0,score-25);
+
+updateInfo();
+
+newQuestion();
+
+}
+
+}
+
+function drawBlock(){
+
+ctx.fillStyle=block.color;
+
+ctx.fillRect(
+block.x,
+block.y,
+block.size,
+block.size
+);
+
+ctx.strokeStyle="white";
+ctx.lineWidth=4;
+
+ctx.strokeRect(
+block.x,
+block.y,
+block.size,
+block.size
+);
+
+ctx.fillStyle="black";
+
+ctx.font="22px Arial";
+
+ctx.textAlign="center";
+
+ctx.fillText(
+currentQuestion.q,
+block.x+50,
+block.y+58
+);
+
+}
+
+document.addEventListener("keydown",function(e){
+
+if(e.key==="ArrowLeft"){
+
+block.x-=20;
+
+}
+
+if(e.key==="ArrowRight"){
+
+block.x+=20;
+
+}
+
+});
+
+function checkAnswer(){
+
+let value=
+parseFloat(
+document.getElementById("answer").value
+);
+
+let feedback=document.getElementById("feedback");
+
+if(Math.abs(value-currentQuestion.a)<=0.02){
+
+feedback.innerHTML="✔";
+
+feedback.className="correct";
+
+score+=100;
+
+speed=Math.max(1,speed-0.2);
+
+if(score>=500){
+level=2;
+}
+
+if(score>=1000){
+level=3;
+}
+
+}
+else{
+
+feedback.innerHTML="✖";
+
+feedback.className="wrong";
+
+speed+=0.5;
+
+}
+
+updateInfo();
+
+document.getElementById("answer").value="";
+
+setTimeout(function(){
+
+feedback.innerHTML="";
+
+},1000);
+
+newQuestion();
+
+}
+
+function updateInfo(){
+
+document.getElementById("score").innerHTML=
+score;
+
+document.getElementById("level").innerHTML=
+level;
+
+}
+
+</script>
+
+</body>
+</html>
