@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Square Root Tetris</title>
+
+<style>
+#gameContainer{
+
+display:flex;
+
+justify-content:center;
+
+
+align-items:flex-start;
+
+gap:20px;
+
+margin-top:20px;
+
+}
+
+#leftPanel{
+
+width:220px;
+
+min-height:600px;
+
+background:#111;
+
+border:4px solid gold;
+
+padding:15px;
+
+color:white;
+
+}
+
+#centerPanel{
+
+width:300px;
+
+}
+
+#rightPanel{
+
+width:220px;
+
+min-height:600px;
+
+background:#111;
+
+border:4px solid lime;
+
+padding:15px;
+
+color:white;
+
+}
+
+#questionText{
+
+font-size:28px;
+
+color:yellow;
+
+margin-top:20px;
+
+}
+
+#feedback{
+
+font-size:55px;
+
+height:70px;
+
+font-weight:bold;
+
+}
+
+#rightPanel button{
+
+display:block;
+
+width:100%;
+
+padding:10px;
+
+margin-bottom:10px;
+
+font-size:24px;
+
+font-weight:bold;
+
+background:cyan;
+
+cursor:pointer;
+
+border:none;
+
+}
+
+#rightPanel button:hover{
+
+background:yellow;
+
+}
+body{
+background:#000;
+color:white;
+font-family:Arial;
+text-align:center;
+margin:0;
+}
+
+h1{
+color:gold;
+margin-top:20px;
+text-shadow:3px 3px red;
+}
+
+canvas{
+background:#111;
+border:4px solid cyan;
+margin-top:10px;
+}
+
+#startScreen{
+margin-top:120px;
+}
+
+.flash{
+animation:flash 1s infinite;
+}
+
+@keyframes flash{
+50%{opacity:0;}
+}
+
+#gameArea{
+display:none;
+}
+
+#info{
+font-size:24px;
+margin:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="startScreen">
+
+<h1>SQUARE ROOT TETRIS</h1>
+
+<h2 class="flash">INSERT COIN</h2>
+
+<h3>PRESS SPACE TO START</h3>
+<br><br>
+
+<button onclick="startGame()">
+START GAME
+</button>
+</div>
+<div id="gameArea" style="display:none;">
+
+<div id="gameContainer">
+
+<div id="leftPanel">
+
+<h2>LEVEL 1</h2>
+
+<h3 id="levelName">
+Decimal Square Roots
+</h3>
+
+<hr>
+
+<div id="questionText">
+
+Approximate:
+
+√0.15
+
+</div>
+
+<hr>
+
+<div id="feedback"></div>
+
+<hr>
+
+Score:
+<span id="score">0</span>
+
+</div>
+
+<div id="centerPanel">
+
+<canvas
+id="game"
+width="300"
+height="600">
+</canvas>
+
+</div>
+
+<div id="rightPanel">
+
+<h2>Answers</h2>
+
+<button onclick="checkAnswer('A')">
+A
+</button>
+
+<button onclick="checkAnswer('B')">
+B
+</button>
+
+<button onclick="checkAnswer('C')">
+C
+</button>
+
+<button onclick="checkAnswer('D')">
+D
+</button>
+
+<hr>
+
+<div id="answerChoices">
+
+A) 0.25<br>
+B) 0.39<br>
+C) 0.55<br>
+D) 0.88
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+const COLS=10;
+const ROWS=20;
+const SIZE=30;
+
+let score=0;
+let gameStarted=false;
+
+const colors=[
+"",
+"#00FFFF",
+"#FFFF00",
+"#AA00FF",
+"#00FF00",
+"#FF0000",
+"#0000FF",
+"#FF8800"
+];
+
+const shapes=[
+
+[
+[1,1,1,1]
+],
+
+[
+[2,2],
+[2,2]
+],
+
+[
+[0,3,0],
+[3,3,3]
+],
+
+[
+[0,4,4],
+[4,4,0]
+],
+
+[
+[5,5,0],
+[0,5,5]
+],
+
+[
+[6,0,0],
+[6,6,6]
+],
+
+[
+[0,0,7],
+[7,7,7]
+]
+
+];
+
+const questions = [
+
+{
+question:"√0.15",
+correct:"B",
+choices:[
+"A) 0.25",
+"B) 0.39",
+"C) 0.55",
+"D) 0.88"
+]
+},
+
+{
+question:"√0.22",
+correct:"C",
+choices:[
+"A) 0.31",
+"B) 0.41",
+"C) 0.47",
+"D) 0.58"
+]
+},
+
+{
+question:"√4.5",
+correct:"C",
+choices:[
+"A) 1.4",
+"B) 1.8",
+"C) 2.1",
+"D) 2.8"
+]
+}
+
+];
+
+let currentQuestion = 0;
+
+function loadQuestion(){
+
+document.getElementById("questionText").innerHTML =
+
+"Approximate:<br>" +
+questions[currentQuestion].question;
+
+document.getElementById("answerChoices").innerHTML =
+
+questions[currentQuestion].choices.join("<br>");
+
+}
+let board=[];
+
+function createBoard(){
+
+for(let r=0;r<ROWS;r++){
+
+board[r]=[];
+
+for(let c=0;c<COLS;c++){
+
+board[r][c]=0;
+
+}
+
+}
+
+}
+
+createBoard();
+
+let player={
+x:3,
+y:0,
+shape:null
+};
+
+function newPiece(){
+
+player.shape=
+shapes[Math.floor(Math.random()*shapes.length)];
+
+player.x=3;
+player.y=0;
+
+}
+
+newPiece();
+
+function drawCell(x,y,color){
+
+ctx.fillStyle=color;
+
+ctx.fillRect(
+x*SIZE,
+y*SIZE,
+SIZE,
+SIZE
+);
+
+ctx.strokeStyle="#222";
+
+ctx.strokeRect(
+x*SIZE,
+y*SIZE,
+SIZE,
+SIZE
+);
+
+}
+
+function drawBoard(){
+
+for(let r=0;r<ROWS;r++){
+
+for(let c=0;c<COLS;c++){
+
+if(board[r][c]){
+
+drawCell(c,r,colors[board[r][c]]);
+
+}
+
+}
+
+}
+
+}
+
+function drawPlayer(){
+
+for(let r=0;r<player.shape.length;r++){
+
+for(let c=0;c<player.shape[r].length;c++){
+
+if(player.shape[r][c]){
+
+drawCell(
+player.x+c,
+player.y+r,
+colors[player.shape[r][c]]
+);
+
+}
+
+}
+
+}
+
+}
+
+function collide(){
+
+for(let r=0;r<player.shape.length;r++){
+
+for(let c=0;c<player.shape[r].length;c++){
+
+if(player.shape[r][c]){
+
+let newY=player.y+r;
+let newX=player.x+c;
+
+if(
+newY>=ROWS ||
+newX<0 ||
+newX>=COLS ||
+(board[newY] && board[newY][newX])
+){
+
+return true;
+
+}
+
+}
+
+}
+
+}
+
+return false;
+
+}
+
+function merge(){
+
+for(let r=0;r<player.shape.length;r++){
+
+for(let c=0;c<player.shape[r].length;c++){
+
+if(player.shape[r][c]){
+
+board[player.y+r][player.x+c]=
+player.shape[r][c];
+
+}
+
+}
+
+}
+
+}
+
+function clearLines(){
+
+for(let r=ROWS-1;r>=0;r--){
+
+let full=true;
+
+for(let c=0;c<COLS;c++){
+
+if(board[r][c]===0){
+
+full=false;
+
+break;
+
+}
+
+}
+
+if(full){
+
+board.splice(r,1);
+
+board.unshift(
+new Array(COLS).fill(0)
+);
+
+score+=100;
+
+document.getElementById("score").innerHTML=
+score;
+
+r++;
+
+}
+
+}
+
+}
+
+function update(){
+
+player.y++;
+
+if(collide()){
+
+player.y--;
+
+merge();
+
+clearLines();
+
+newPiece();
+
+if(collide()){
+
+alert("GAME OVER");
+
+createBoard();
+
+score=0;
+
+}
+
+}
+
+}
+
+function draw(){
+
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+drawBoard();
+drawPlayer();
+
+}
+
+function gameLoop(){
+
+update();
+draw();
+
+}
+
+document.addEventListener("keydown",function(e){
+
+    console.log("KEY PRESSED:",e.code);
+
+    if(e.code==="Space"){
+
+        console.log("SPACE DETECTED");
+
+        startGame();
+
+        return;
+    }
+
+
+
+if(e.key==="ArrowLeft"){
+
+player.x--;
+
+if(collide()){
+
+player.x++;
+
+}
+
+}
+
+if(e.key==="ArrowRight"){
+
+player.x++;
+
+if(collide()){
+
+player.x--;
+
+}
+
+}
+
+if(e.key==="ArrowDown"){
+
+player.y++;
+
+if(collide()){
+
+player.y--;
+
+}
+
+}
+
+});
+function startGame(){
+
+    if(gameStarted){
+        return;
+    }
+
+    gameStarted=true;
+
+    document.getElementById("startScreen").style.display =
+    "none";
+
+    document.getElementById("gameArea").style.display =
+    "block";
+
+    loadQuestion();
+
+    setInterval(gameLoop,1200);
+
+}
+
+
+function checkAnswer(choice){
+
+    if(choice === questions[currentQuestion].correct){
+
+        document.getElementById("feedback").innerHTML =
+        "✅ CORRECT";
+
+        document.getElementById("feedback").style.color =
+        "lime";
+
+        score += 100;
+
+        document.getElementById("score").innerHTML =
+        score;
+
+    }
+    else{
+
+        document.getElementById("feedback").innerHTML =
+        "❌ WRONG";
+
+        document.getElementById("feedback").style.color =
+        "red";
+
+    }
+
+    currentQuestion++;
+
+    if(currentQuestion >= questions.length){
+        currentQuestion = 0;
+    }
+
+    setTimeout(function(){
+
+        document.getElementById("feedback").innerHTML = "";
+
+        loadQuestion();
+
+    },1000);
+
+}
+
+function checkAnswer(choice){
+
+    if(choice === questions[currentQuestion].correct){
+
+        document.getElementById("feedback").innerHTML =
+        "✅ CORRECT";
+
+        document.getElementById("feedback").style.color =
+        "lime";
+
+        score += 100;
+
+        document.getElementById("score").innerHTML =
+        score;
+
+    }
+    else{
+
+        document.getElementById("feedback").innerHTML =
+        "❌ WRONG";
+
+        document.getElementById("feedback").style.color =
+        "red";
+
+    }
+
+    currentQuestion++;
+
+    if(currentQuestion >= questions.length){
+        currentQuestion = 0;
+    }
+
+    setTimeout(function(){
+
+        document.getElementById("feedback").innerHTML = "";
+
+        loadQuestion();
+
+    },1000);
+
+}
+</script>
+
+</body>
+</html>
